@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "token">("email");
@@ -20,15 +22,14 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/auth/forgot-password", {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(data.message + " Token: " + data.token);
-        setToken(data.token);
+        setMessage(data.message);
         setStep("token");
       } else {
         setError(data.message);
@@ -46,7 +47,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/auth/reset-password", {
+      const res = await fetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),

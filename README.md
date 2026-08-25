@@ -4,10 +4,13 @@ A complete authentication system built with Next.js, NestJS, PostgreSQL, and Pri
 
 ## Features
 
-- Register a new account
-- Login with email and password
-- Protected home page (JWT authentication)
-- Reset password (forgot password flow)
+- Register a new account with input validation
+- Login with JWT authentication
+- Protected home page (token-based)
+- Logout
+- Forgot password with token stored server-side (invalidated after use)
+- Password reset flow
+- Proper error handling and HTTP status codes
 
 ## Tech Stack
 
@@ -15,7 +18,8 @@ A complete authentication system built with Next.js, NestJS, PostgreSQL, and Pri
 - **Backend:** NestJS, TypeScript
 - **Database:** PostgreSQL 17
 - **ORM:** Prisma 6
-- **Auth:** JWT (jsonwebtoken) + bcrypt
+- **Auth:** JWT (`@nestjs/jwt`) + bcrypt
+- **Validation:** class-validator + class-transformer
 
 ## Prerequisites
 
@@ -28,70 +32,117 @@ A complete authentication system built with Next.js, NestJS, PostgreSQL, and Pri
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/auth-system.git
-cd auth-system
+git clone https://github.com/Mohame570/Auth-System.git
+cd Auth-System
+```
 
-2. Database Setup
-Open PostgreSQL terminal (psql) and create the database:CREATE DATABASE auth_db;
+### 2. Database Setup
 
-3. Backend Setup
+Open PostgreSQL terminal (psql) or pgAdmin 4 and create the database:
+
+```sql
+CREATE DATABASE auth_db;
+```
+
+### 3. Backend Setup
+
+```bash
 cd auth-back
 npm install
-Create a .env file inside auth-back:
+```
 
+Create a `.env` file inside `auth-back/`:
+
+```
 DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/auth_db"
-Replace YOUR_PASSWORD with your PostgreSQL password.
+JWT_SECRET="your-own-secret-key-here"
+```
+
+Replace `YOUR_PASSWORD` with your PostgreSQL password and `your-own-secret-key-here` with a strong random string.
 
 Run the migration:
 
+```bash
 npx prisma migrate dev --name init
+```
+
 Start the backend server:
 
+```bash
 npm run start:dev
-Backend runs on http://localhost:3001.
+```
 
-4. Frontend Setup
-Open a new terminal:
+Backend runs on `http://localhost:3001`.
 
-cd auth-front
+### 4. Frontend Setup
+
+Open a new terminal from the project root:
+
+```bash
 npm install
 npm run dev
-Frontend runs on http://localhost:3000.
+```
 
-API Endpoints
-Method	Endpoint	Description
-POST	/auth/register	Register a new user
-POST	/auth/login	Login and get JWT token
-GET	/auth/me	Get current user profile (requires Bearer token)
-POST	/auth/forgot-password	Generate reset token
-POST	/auth/reset-password	Reset password with token
-Project Structure
-auth-front/
+Create a `.env.local` file in the project root:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+Frontend runs on `http://localhost:3000`.
+
+### 5. Run Tests (Optional)
+
+```bash
+cd auth-back
+npm run test:e2e
+```
+
+## API Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/register` | Register a new user | No |
+| POST | `/auth/login` | Login and get JWT token | No |
+| GET | `/auth/me` | Get current user profile | Yes (Bearer token) |
+| POST | `/auth/forgot-password` | Request password reset | No |
+| POST | `/auth/reset-password` | Reset password with token | No |
+
+## Project Structure
+
+```
+Auth-System/
 ├── app/
-│   ├── page.tsx              # Home page (welcome)
-│   ├── layout.tsx            # Layout with navbar
-│   ├── globals.css           # Global styles
-│   ├── login/page.tsx        # Login page
-│   ├── register/page.tsx     # Register page
-│   ├── home/page.tsx         # Protected home page
-│   └── reset-password/page.tsx # Reset password page
+│   ├── page.tsx                  # Welcome page
+│   ├── layout.tsx                # Layout with navbar
+│   ├── globals.css               # Global styles
+│   ├── login/page.tsx            # Login page
+│   ├── register/page.tsx         # Register page
+│   ├── home/page.tsx             # Protected home page
+│   └── reset-password/page.tsx   # Reset password page
 ├── auth-back/
 │   ├── prisma/
-│   │   └── schema.prisma     # Database schema
+│   │   ├── schema.prisma         # Database schema
+│   │   └── migrations/           # Prisma migrations
 │   ├── src/
-│   │   ├── app.module.ts     # Root module
-│   │   ├── main.ts           # Entry point (port 3001)
+│   │   ├── main.ts               # Entry point (port 3001, ValidationPipe)
+│   │   ├── app.module.ts         # Root module
+│   │   ├── prisma/
+│   │   │   └── prisma.service.ts # Injectable PrismaService
 │   │   └── auth/
-│   │       ├── auth.module.ts
+│   │       ├── auth.module.ts    # Auth module (JWT, ConfigModule)
 │   │       ├── auth.controller.ts
 │   │       ├── auth.service.ts
 │   │       └── dto/
 │   │           ├── register.dto.ts
 │   │           ├── login.dto.ts
 │   │           └── reset-password.dto.ts
-│   ├── .env                  # DATABASE_URL
-│   └── prisma.config.ts      # Prisma config with dotenv
+│   ├── .env                      # DATABASE_URL + JWT_SECRET
+│   └── test/
+│       └── auth.e2e-spec.ts      # E2E tests
+├── .env.local                    # NEXT_PUBLIC_API_URL
 └── README.md
+```
 
 ## Database Schema
 
@@ -101,7 +152,16 @@ CREATE TABLE "User" (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  createdAt TIMESTAMP DEFAULT NOW()
+  "resetToken" TEXT,
+  "resetTokenExpiry" TIMESTAMP,
+  "createdAt" TIMESTAMP DEFAULT NOW()
 );
+```
 
+## Security Notes
 
+- JWT secret is stored in `.env` (not hardcoded in source)
+- Passwords are hashed with bcrypt (10 salt rounds)
+- Reset tokens are stored server-side and invalidated after use
+- Input validation via class-validator on all endpoints
+- Proper HTTP status codes (401, 404, 409) on errors
