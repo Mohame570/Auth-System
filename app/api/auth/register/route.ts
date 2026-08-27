@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/jwt';
 
@@ -32,7 +32,8 @@ export async function POST(request: Request) {
 
     const token = await signToken({ id: user.id, email: user.email });
     return NextResponse.json({ token, user: { id: user.id, name: user.name, email: user.email } }, { status: 201 });
-  } catch {
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Register error:', error?.message || error);
+    return NextResponse.json({ message: error?.message || 'Internal server error' }, { status: 500 });
   }
 }
