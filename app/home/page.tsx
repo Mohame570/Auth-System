@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null);
@@ -17,7 +15,7 @@ export default function HomePage() {
       return;
     }
 
-    fetch(`${API_URL}/auth/me`, {
+    fetch("/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

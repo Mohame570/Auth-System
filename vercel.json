@@ -1,7 +1,5 @@
 {
-  "buildCommand": "next build",
+  "buildCommand": "npx prisma generate && next build",
   "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "ignoreCommand": "npx -y vercel-filter-files -- \"auth-back/**\" \"!.env*\" \"!DOCUMENTATION.md\""
+  "framework": "nextjs"
 }
