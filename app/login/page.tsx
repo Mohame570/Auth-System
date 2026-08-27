@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -87,14 +88,14 @@ export default function LoginPage() {
 
         <p className="mt-4 text-center text-lg">
           Don&apos;t have an account?{" "}
-          <a href="/register" className="text-blue-600 font-bold hover:underline">
+          <Link href="/register" className="text-blue-600 font-bold hover:underline">
             Register
-          </a>
+          </Link>
         </p>
         <p className="mt-2 text-center text-lg">
-          <a href="/reset-password" className="text-red-600 font-bold hover:underline">
+          <Link href="/reset-password" className="text-red-600 font-bold hover:underline">
             Forgot Password?
-          </a>
+          </Link>
         </p>
       </div>
     </div>

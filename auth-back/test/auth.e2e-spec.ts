@@ -6,7 +6,6 @@ import { AppModule } from '../src/app.module';
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let token: string;
-  let resetToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -26,11 +25,11 @@ describe('Auth (e2e)', () => {
     it('should register a new user', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ name: 'Test User', email: 'test@example.com', password: 'password123' })
+        .send({ name: 'Test User', email: 'e2e-test@example.com', password: 'password123' })
         .expect(201)
         .expect((res) => {
           expect(res.body.token).toBeDefined();
-          expect(res.body.user.email).toBe('test@example.com');
+          expect(res.body.user.email).toBe('e2e-test@example.com');
           expect(res.body.user.name).toBe('Test User');
           token = res.body.token;
         });
@@ -39,14 +38,14 @@ describe('Auth (e2e)', () => {
     it('should reject duplicate email', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ name: 'Test User 2', email: 'test@example.com', password: 'password123' })
+        .send({ name: 'Test User 2', email: 'e2e-test@example.com', password: 'password123' })
         .expect(409);
     });
 
     it('should reject empty password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ name: 'Test', email: 'new@example.com', password: '' })
+        .send({ name: 'Test', email: 'new-e2e@example.com', password: '' })
         .expect(400);
     });
 
@@ -56,31 +55,38 @@ describe('Auth (e2e)', () => {
         .send({ name: 'Test', email: 'not-an-email', password: 'password123' })
         .expect(400);
     });
+
+    it('should reject password shorter than 6 chars', () => {
+      return request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ name: 'Test', email: 'short@example.com', password: '12345' })
+        .expect(400);
+    });
   });
 
   describe('POST /auth/login', () => {
     it('should login with valid credentials', () => {
       return request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'test@example.com', password: 'password123' })
+        .send({ email: 'e2e-test@example.com', password: 'password123' })
         .expect(200)
         .expect((res) => {
           expect(res.body.token).toBeDefined();
-          expect(res.body.user.email).toBe('test@example.com');
+          expect(res.body.user.email).toBe('e2e-test@example.com');
         });
     });
 
     it('should reject wrong password', () => {
       return request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'test@example.com', password: 'wrongpassword' })
+        .send({ email: 'e2e-test@example.com', password: 'wrongpassword' })
         .expect(401);
     });
 
     it('should reject non-existent email', () => {
       return request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'nobody@example.com', password: 'password123' })
+        .send({ email: 'nobody-e2e@example.com', password: 'password123' })
         .expect(401);
     });
   });
@@ -92,7 +98,7 @@ describe('Auth (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.email).toBe('test@example.com');
+          expect(res.body.email).toBe('e2e-test@example.com');
           expect(res.body.name).toBe('Test User');
         });
     });
@@ -112,10 +118,10 @@ describe('Auth (e2e)', () => {
   });
 
   describe('POST /auth/forgot-password', () => {
-    it('should return success message', () => {
+    it('should return success message for existing email', () => {
       return request(app.getHttpServer())
         .post('/auth/forgot-password')
-        .send({ email: 'test@example.com' })
+        .send({ email: 'e2e-test@example.com' })
         .expect(201)
         .expect((res) => {
           expect(res.body.message).toBeDefined();
@@ -123,11 +129,14 @@ describe('Auth (e2e)', () => {
         });
     });
 
-    it('should return same message for non-existent email', () => {
+    it('should return same message for non-existent email (no email enumeration)', () => {
       return request(app.getHttpServer())
         .post('/auth/forgot-password')
-        .send({ email: 'nonexistent@example.com' })
-        .expect(404);
+        .send({ email: 'nonexistent-e2e@example.com' })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.message).toBeDefined();
+        });
     });
   });
 

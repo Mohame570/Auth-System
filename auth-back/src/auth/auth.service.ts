@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -42,17 +42,17 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new NotFoundException('User not found');
 
-    const token = this.jwtService.sign({ id: user.id }, { expiresIn: '15m' });
-    const expiry = new Date(Date.now() + 15 * 60 * 1000);
+    if (user) {
+      const token = this.jwtService.sign({ id: user.id }, { expiresIn: '15m' });
+      const expiry = new Date(Date.now() + 15 * 60 * 1000);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken: token, resetTokenExpiry: expiry },
+      });
+      console.log(`[RESET TOKEN] ${email}: ${token}`);
+    }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { resetToken: token, resetTokenExpiry: expiry },
-    });
-
-    console.log(`Reset token for ${email}: ${token}`);
     return { message: 'If that email is registered, a reset link has been sent.' };
   }
 
