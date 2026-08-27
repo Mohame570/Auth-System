@@ -1,0 +1,7 @@
+{
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "ignoreCommand": "npx -y vercel-filter-files -- \"auth-back/**\" \"!.env*\" \"!DOCUMENTATION.md\""
+}
